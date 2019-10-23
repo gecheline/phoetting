@@ -10,3 +10,15 @@ grid_search/semi-detached/.DS_Store
 grid_search/.ipynb_checkpoints/
 
 grid_search/contact/.ipynb_checkpoints/
+
+.DS_Store
+
+phoetting.egg-info/
+
+dist/
+
+showcases/grid_search/contact/.ipynb_checkpoints/
+
+showcases/grid_search/.ipynb_checkpoints/
+
+build/lib/phoetting/
