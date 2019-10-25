@@ -1,1 +1,2 @@
-from . import *
+from . import fitters
+from phoetting.fitters import *
