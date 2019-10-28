@@ -1,8 +1,10 @@
 import phoebe
 import numpy as np
-from phoetting.fitters.main import Fitter 
+from phoetting.fitters.main import Fitter, compute_lc, compute_rvs
 import sys
 import types
+import dill as pickle
+
 
 if sys.version_info[0] < 3:
     import copy_reg as copyreg
@@ -15,41 +17,11 @@ def _pickle_method(m):
 
 copyreg.pickle(types.MethodType, _pickle_method)
 
+
 class GridSearch(Fitter):
 
     def __init__(self, **kwargs):
         super(GridSearch,self).__init__(**kwargs)
-
-
-    def compute_lc(self, values):
-        # set values of all the parameters and return computed model
-        
-        if len(values) != len(self.params):
-            raise ValueError('Shape mismatch between values array (%i) and parameters (%i)!' % (len(values), len(self.params)))
-        
-        self.set_params(values)
-   
-        try:
-            self.bundle.run_compute()
-            return self.bundle['value@fluxes@model']
-        except:
-            return np.zeros(len(self.bundle['compute_phases']))
-
-
-    def compute_rvs(self,values):
-
-                
-        if len(values) != len(self.params):
-            raise ValueError('Shape mismatch between values array (%i) and parameters (%i)!' % (len(values), len(self.params)))
-        
-        self.set_params(values)
-   
-        try:
-            self.bundle.run_compute()
-            return [self.bundle['value@rvs@primary@model'], self.bundle['value@rvs@secondary@model']]
-
-        except:
-            return [np.zeros(len(self.bundle['compute_phases'])),np.zeros(len(self.bundle['compute_phases']))]
 
 
     def clean_up_db(self, models, params):
@@ -67,6 +39,7 @@ class GridSearch(Fitter):
         N: int
             Number of models to compute in the database
         '''
+        
         N = int(N)
         if db_type not in ['lc', 'rv']:
             raise ValueError('Database type %s not supported, can be one of [\'lc\',\'rv\']')
@@ -84,10 +57,11 @@ class GridSearch(Fitter):
         if db_type == 'lc':
             if parallel:
                 import multiprocessing as mp
+                from functools import partial
                 numproc = mp.cpu_count() 
                 print('Available processors: %s' % numproc)
                 pool = mp.Pool(processes=numproc)
-                results = pool.map(self.compute_lc, param_space)
+                results = pool.map(partial(compute_lc, params=self.params, bundle_file=self.bundle_file), param_space)
                 lcs = np.array(results)
                 
                 pool.close()
@@ -97,7 +71,8 @@ class GridSearch(Fitter):
                 lcs = np.zeros((N,len(phases)))
                 for i, values in enumerate(param_space):
                     print('%i of %i' % (i, N))
-                    lcs[i] = self.compute_lc(values)
+                    lcs[i] = compute_lc(values=values, params=self.params, 
+                                            bundle_file=self.bundle_file)
             
             lcs, param_space = self.clean_up_db(lcs,param_space)
             
@@ -110,10 +85,11 @@ class GridSearch(Fitter):
         elif db_type=='rv':
             if parallel:
                 import multiprocessing as mp
+                from functools import partial
                 numproc = mp.cpu_count() 
                 print('Available processors: %s' % numproc)
                 pool = mp.Pool(processes=numproc)
-                results = pool.map(self.compute_lc, param_space)
+                results = pool.map(partial(compute_rvs, ), param_space)
                 rvs_1 = np.array(results[0])
                 rvs_2 = np.array(results[1])
                 
@@ -124,7 +100,7 @@ class GridSearch(Fitter):
                 rvs_1 = np.zeros((N,len(phases)))
                 rvs_2 = np.zeros((N,len(phases)))
                 for i, values in enumerate(param_space):
-                    rvs_1[i], rvs_2[i] = self.compute_rvs(values)
+                    rvs_1[i], rvs_2[i] = compute_rvs(values, gscls=self)
             
             rvs_1, param_space = self.clean_up_db(rvs_1,param_space)
             rvs_2, _ = self.clean_up_db(rvs_2, param_space)
