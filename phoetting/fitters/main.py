@@ -16,7 +16,7 @@ copyreg.pickle(types.MethodType, _pickle_method)
 
 
 def compute_lc(values, params, bundle_file):
-
+    print('Computing light curve for %s' % values)
     bundle = phoebe.load(bundle_file)
     if len(values) != len(params):
         raise ValueError('Shape mismatch between values array (%i) and parameters (%i)!' % (len(values), len(params)))
@@ -27,7 +27,7 @@ def compute_lc(values, params, bundle_file):
         bundle.run_compute()
         return bundle['value@fluxes@model']
     except:
-        return np.zeros(len(bundle['compute_phases']))
+        return np.zeros(len(bundle['value@compute_phases']))
 
 
 def compute_rvs(values, params, bundle_file):

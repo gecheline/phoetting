@@ -40,6 +40,7 @@ class GridSearch(Fitter):
             Number of models to compute in the database
         '''
         
+        bundle = phoebe.load(self.bundle_file)
         N = int(N)
         if db_type not in ['lc', 'rv']:
             raise ValueError('Database type %s not supported, can be one of [\'lc\',\'rv\']')
@@ -48,7 +49,8 @@ class GridSearch(Fitter):
         # add dataset to Bundle if it doesn't exist
         if len(self.bundle[db_type].twigs) == 0:
             #self.add_datasets(datasets=[db_type], compute_phases=[phases])
-            self.bundle.add_dataset(db_type, compute_phases=phases)
+            bundle.add_dataset(db_type, compute_phases=phases)
+        bundle.save(self.bundle_file)    
             
         # make arrays to compute the parameters in
         param_space = np.random.uniform(self.ranges[:,0],self.ranges[:,1],(N,len(self.ranges)))
