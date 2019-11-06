@@ -102,7 +102,7 @@ class Fitter(object):
 
             for key in fixed_params.keys():
                 try:
-                    bundle[key] = fixed_params[key]
+                    bundle.set_value_all(key, fixed_params[key])
                 except:
                     raise Warning('%s is not a valid or explicit phoebe twig -- ignoring' % key)
 
