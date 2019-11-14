@@ -27,7 +27,13 @@ def compute_lc(values, params, bundle_file):
         bundle.run_compute()
         return bundle['value@fluxes@model']
     except:
-        return np.zeros(len(bundle['value@compute_phases']))
+        try:
+            bundle.set_value_all('atm', 'blackbody')
+            bundle.set_value_all('ld_mode', 'manual')
+            bundle.run_compute()
+            return bundle['value@fluxes@model']
+        except:
+            return np.zeros(len(bundle['value@compute_phases']))
 
 
 def compute_rvs(values, params, bundle_file):
@@ -98,7 +104,7 @@ class Fitter(object):
 
             for key in fixed_params.keys():
                 try:
-                    bundle[key] = fixed_params[key]
+                    bundle.set_value_all(key, fixed_params[key])
                 except:
                     raise Warning('%s is not a valid or explicit phoebe twig -- ignoring' % key)
 

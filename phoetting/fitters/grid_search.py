@@ -1,4 +1,4 @@
-import phoebe
+cdimport phoebe
 import numpy as np
 from phoetting.fitters.main import Fitter, compute_lc, compute_rvs
 import sys
@@ -80,7 +80,7 @@ class GridSearch(Fitter):
             if len(filename) == 0:
                 filename='lc_db'
             np.save(filename, lcs)
-            np.save(filename+'_ps', param_space)
+            np.savetxt(filename+'_ps.csv', param_space, delimiter=',', header=",".join(self.params))
             self.db_file = filename
             
         elif db_type=='rv':
@@ -101,7 +101,8 @@ class GridSearch(Fitter):
                 rvs_1 = np.zeros((N,len(phases)))
                 rvs_2 = np.zeros((N,len(phases)))
                 for i, values in enumerate(param_space):
-                    rvs_1[i], rvs_2[i] = compute_rvs(values, gscls=self)
+                    rvs_1[i], rvs_2[i] = compute_rvs(values=values, params=self.params, 
+                                                        bundle_file = self.bundle_file)
             
             rvs_1, param_space = self.clean_up_db(rvs_1,param_space)
             rvs_2, _ = self.clean_up_db(rvs_2, param_space)
@@ -110,7 +111,7 @@ class GridSearch(Fitter):
                 filename='rv_db'
             np.save(filename+'_1', rvs_1)
             np.save(filename+'_2', rvs_2)
-            np.save(filename+'_ps', param_space)
+            np.savetxt(filename+'_ps.csv', param_space, delimiter=',', header=",".join(self.params))
             self.db_file = filename
 
         else:
@@ -129,7 +130,7 @@ class GridSearch(Fitter):
             weights=ws*fs[:,np.newaxis]
             return ds_0, inds_0, weights
         
-        def plot_results(truths = [], skip=3, save=True):
+        def plot_results(params_interp, params_min, params_max, truths = [], skip=3, save=True):
             import matplotlib.pyplot as plt
 
             length = len(params_interp[:,0][::skip])
@@ -167,7 +168,5 @@ class GridSearch(Fitter):
                 skip = kwargs['skip']
             else:
                 skip = 3
-            plot_results(truths = test_params, skip=skip, save=save_plot)
-        
-        return {'dw-mean':params_interp, 'min': params_min, 'max': params_max}
+            plot_results(params_interp, params_min, params_max, truths = test_params, skip=skip, save=save_plot)
   
