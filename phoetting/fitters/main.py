@@ -48,7 +48,7 @@ def compute_rvs(values, params, bundle_file):
 
 class Fitter(object):
 
-    def __init__(self, params={'incl@binary': [0.,90.]}, compute_bundle = True, bundle = None, binary_type='detached', fixed_params={}, store_bundle=True, **kwargs):
+    def __init__(self, params={'incl@binary': [0.,90.]}, binary_type='detached', fixed_params={}, store_bundle=True, **kwargs):
 
         '''
         Initialize a Fitter instance with parameters to fit and fix in a phoebe Bundle.
@@ -85,8 +85,10 @@ class Fitter(object):
 
         '''
 
-        if bundle == None:
+        if 'bundle' not in kwargs.keys():
             bundle = self.compute_bundle(binary_type=binary_type, **kwargs)
+        else:
+            bundle = kwargs['bundle']
         
         good_ranges, good_params = self.check_params(params=params, bundle=bundle)
         

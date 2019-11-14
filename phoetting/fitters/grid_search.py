@@ -168,4 +168,6 @@ class GridSearch(Fitter):
             else:
                 skip = 3
             plot_results(truths = test_params, skip=skip, save=save_plot)
+        
+        return {'dw-mean':params_interp, 'min': params_min, 'max': params_max}
   
