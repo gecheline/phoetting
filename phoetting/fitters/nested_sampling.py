@@ -91,33 +91,36 @@ class NestedSampling(Fitter):
             return -1e12
 
 
-    def run_dynesty(self, filename='dn_samples', **kwargs):
+    def run_dynesty(self, filename='dn_samples', parallel=True, saveiter=50, **kwargs):
         
         try:
             import dynesty as dn
         except:
             raise ImportError('dynesty cannot be imported')
         
-        import multiprocessing as mp
-
         if 'filename' in kwargs.keys():
             filename = kwargs[filename]
         else:
             filename = self.bundle_file + '_dynesty'
         
         self.dynesty_file = filename
-
         ndim = len(self.params)
-        nproc = mp.cpu_count()
-        pool = mp.Pool(nproc)
         self.__dn_filename = filename
 
-        sampler = dn.NestedSampler(self.loglike, self.prior_transform, ndim, pool=pool, queue_size=nproc, **kwargs)
+        if parallel:
+            import multiprocessing as mp
+            nproc = mp.cpu_count()
+            pool = mp.Pool(nproc)
+            
+            sampler = dn.NestedSampler(self.loglike, self.prior_transform, ndim, pool=pool, queue_size=nproc, **kwargs)
+        
+        else:
+            sampler = dn.NestedSampler(self.loglike, self.prior_transform, ndim, **kwargs)
 
 
         for result in sampler.sample(**kwargs):
             res = sampler.results
-            if res['niter']%50 == 0:
+            if res['niter']%saveiter == 0:
                 with open(self.dynesty_file, 'wb') as pfile:
                     pickle.dump(res, pfile)
 
