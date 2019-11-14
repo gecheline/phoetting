@@ -97,25 +97,23 @@ class NestedSampling(Fitter):
             import dynesty as dn
         except:
             raise ImportError('dynesty cannot be imported')
-        
-        if 'filename' in kwargs.keys():
-            filename = kwargs[filename]
-        else:
-            filename = self.bundle_file + '_dynesty'
-        
+
+        filename = kwargs.get('filename', self.bundle_file + '_dynesty')
+ 
         self.dynesty_file = filename
         ndim = len(self.params)
         self.__dn_filename = filename
+        nlive = kwargs.pop('nlive', 500)
 
         if parallel:
             import multiprocessing as mp
             nproc = mp.cpu_count()
             pool = mp.Pool(nproc)
             
-            sampler = dn.NestedSampler(self.loglike, self.prior_transform, ndim, pool=pool, queue_size=nproc, **kwargs)
+            sampler = dn.NestedSampler(self.loglike, self.prior_transform, ndim=ndim, nlive=nlive, pool=pool, queue_size=nproc, **kwargs)
         
         else:
-            sampler = dn.NestedSampler(self.loglike, self.prior_transform, ndim, **kwargs)
+            sampler = dn.NestedSampler(self.loglike, self.prior_transform, ndim=ndim, nlive=nlive, **kwargs)
 
 
         for result in sampler.sample(**kwargs):

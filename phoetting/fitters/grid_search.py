@@ -148,10 +148,7 @@ class GridSearch(Fitter):
                 axes[i].set_ylabel(self.params[i])
             
             if save:
-                if 'filename' in kwargs.keys():
-                    filename = kwargs['filename']
-                else:
-                    filename = self.db_file+'_results.png'
+                filename = kwargs.get('filename', self.db_file+'_results.png')
                 fig.savefig(filename, dpi=300)
                 plt.close()
             else:
@@ -164,9 +161,6 @@ class GridSearch(Fitter):
         params_max = np.array([np.max(database_params[:,i][inds],axis=1) for i in range(0, len(database_params[0]))]).T
 
         if plot:
-            if 'skip' in kwargs.keys():
-                skip = kwargs['skip']
-            else:
-                skip = 3
+            skip = kwargs.get('skip', 3)
             plot_results(params_interp, params_min, params_max, truths = test_params, skip=skip, save=save_plot)
   

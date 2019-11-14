@@ -91,11 +91,8 @@ class Fitter(object):
 
         '''
 
-        if 'bundle' not in kwargs.keys():
-            bundle = self.compute_bundle(binary_type=binary_type, **kwargs)
-        else:
-            bundle = kwargs['bundle']
-        
+        bundle = kwargs.get('bundle', self.compute_bundle(binary_type=binary_type, **kwargs))
+
         good_ranges, good_params = self.check_params(params=params, bundle=bundle)
         
         if bool(fixed_params):
@@ -130,21 +127,15 @@ class Fitter(object):
         if binary_type in ['semi-detached', 'semidetached', 'sd', 'SD', 'sdb', 'SDB']:
             bundle = phoebe.default_binary()
             # check if user has provided component for sd constraint
-            if 'component' in kwargs.keys():
-                sd_comp = kwargs['component']
-            else:
-                sd_comp = 'primary'
+            sd_comp = kwargs.get('component', 'primary')
             bundle.add_constraint('semi-detached', sd_comp)
         
         if binary_type in ['contact', 'overcontact', 'c', 'oc', 'C', 'OC', 'cb', 'CB', 'ocb', 'OCB']:
             bundle = phoebe.default_binary(contact_binary=True)
             # by default, we'll flip the constraint for requiv and ff
             # but check if user doesn't want to
-            if 'flip_ff' in kwargs.keys():
-                flip_ff = kwargs['flip_ff']
-            else:
-                flip_ff = True
-                
+            flip_ff = kwargs.get('flip_ff', True)
+
             if flip_ff:
                 bundle.flip_constraint('pot', solve_for='requiv@primary')
                 bundle.flip_constraint('fillout_factor', solve_for='pot')
