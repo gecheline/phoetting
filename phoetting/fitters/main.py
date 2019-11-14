@@ -112,7 +112,8 @@ class Fitter(object):
         import string
         import random
         choices = string.ascii_letters+'0123456789'
-        self.bundle_file = 'tmpbundle'+''.join(random.choice(choices) for i in range(8))
+        
+        self.bundle_file = kwargs.get('bundle_file', 'tmpbundle'+''.join(random.choice(choices) for i in range(8)))
         bundle.save(self.bundle_file)
         if store_bundle:
             self.bundle = bundle
