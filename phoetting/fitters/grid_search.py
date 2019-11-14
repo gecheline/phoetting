@@ -1,4 +1,4 @@
-cdimport phoebe
+import phoebe
 import numpy as np
 from phoetting.fitters.main import Fitter, compute_lc, compute_rvs
 import sys
