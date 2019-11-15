@@ -1,5 +1,5 @@
 import numpy as np 
-import utils
+from phoetting import utils
 
 def Sampler(object):
 
