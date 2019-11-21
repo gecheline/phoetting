@@ -1,6 +1,10 @@
 import phoebe
 import numpy as np
 
+
+# instead of passing the bundle/bundle_file, make this a subclass of phoebe.Bundle
+# and make all of these Bundle methods
+
 def compute_bundle(binary_type='detached', **kwargs):
 
     '''
