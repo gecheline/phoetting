@@ -136,7 +136,7 @@ def Dynesty(Sampler):
         super(Dynesty,self).__init__(**kwargs)
 
 
-    def run_dynesty(self, parallel=True, saveiter=50, fail_val=-1e12, **kwargs):
+    def run_dynesty(self, parallel=True, saveiter=50, fail_val=-1e12, sample_args={}, **kwargs):
         
         try:
             import dynesty as dn
@@ -210,6 +210,7 @@ def Emcee(Sampler):
             import npdists as nd
         except:
             raise ImportError('cannot import npdists - needed for prior distributions')
+        
         for i,dist in enumerate(self.ranges):
 
             self.init_dists = []
@@ -251,7 +252,7 @@ def Emcee(Sampler):
 
     
 
-    def run_emcee(self, parallel=True, **kwargs):
+    def run_emcee(self, parallel=True, ensembler_args={}, sample_args = {}, **kwargs):
         try:
             import emcee
         except:
