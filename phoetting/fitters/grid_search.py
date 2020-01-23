@@ -40,6 +40,7 @@ class GridSearch(Fitter):
         '''
         
         bundle = phoebe.load(self.bundle_file)
+        
         N = int(N)
         if db_type not in ['lc', 'rv']:
             raise ValueError('Database type %s not supported, can be one of [\'lc\',\'rv\']')
