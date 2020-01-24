@@ -2,6 +2,7 @@ import phoebe
 import numpy as np 
 import sys
 import types
+import pickle
 
 if sys.version_info[0] < 3:
     import copy_reg as copyreg
@@ -224,8 +225,6 @@ class Database(PhoebeLearner):
 
     def build_database(self, db_type='lc', N=100000, phase_params={'min':-0.5, 'max':0.5, 'len':100}, filename='', parallel=True):
         '''
-
-
         Parameters
         ----------
         N: int
@@ -245,6 +244,7 @@ class Database(PhoebeLearner):
         N = int(N)
         if db_type not in ['lc', 'rv']:
             raise ValueError('Database type %s not supported, can be one of [\'lc\',\'rv\']')
+        self.db_type = db_type
 
         phases = np.linspace(phase_params['min'],phase_params['max'],phase_params['len'])
         # add dataset to Bundle if it doesn't exist
@@ -257,7 +257,7 @@ class Database(PhoebeLearner):
         param_space = np.random.uniform(self.ranges[:,0],self.ranges[:,1],(N,len(self.ranges)))
 
         # draw from arrays and compute model
-        if db_type == 'lc':
+        if self.db_type == 'lc':
             if parallel:
                 import multiprocessing as mp
                 from functools import partial
@@ -280,12 +280,18 @@ class Database(PhoebeLearner):
             lcs, param_space = self.clean_up_db(lcs,param_space)
             
             if len(filename) == 0:
-                filename='lc_db'
-            np.save(filename, lcs)
-            np.savetxt(filename+'_ps.csv', param_space, delimiter=',', header=",".join(self.params))
+                filename='lc_db.pickle'
+            db_dict = {}
+            db_dict['lcs'] = lcs
+            db_dict['params'] = param_space
+            db_dict['param_names'] = self.params
+
+            with open(filename, 'wb') as f:
+                pickle.dump(db_dict, f)
+
             self.db_file = filename
             
-        elif db_type=='rv':
+        elif self.db_type=='rv':
             if parallel:
                 import multiprocessing as mp
                 from functools import partial
@@ -310,15 +316,54 @@ class Database(PhoebeLearner):
             rvs_2, _ = self.clean_up_db(rvs_2, param_space)
             
             if len(filename) == 0:
-                filename='rv_db'
-            np.save(filename+'_1', rvs_1)
-            np.save(filename+'_2', rvs_2)
-            np.savetxt(filename+'_ps.csv', param_space, delimiter=',', header=",".join(self.params))
+                filename='rv_db.pickle'
+            db_dict = {}
+            db_dict['rvs_1'] = rvs_1
+            db_dict['rvs_2'] = rvs_2
+            db_dict['params'] = param_space
+            db_dict['param_names'] = self.params
+
+            with open(filename, 'wb') as f:
+                pickle.dump(db_dict, f)
+
             self.db_file = filename
-            self.db_type = db_type
 
         else:
             raise TypeError(db_type)
+
+    
+    def filter_on_parameters(self, params2filter = [], limits = []):
+        '''
+        Parameters
+        ----------
+        params2filter: list
+            A list of the parameter names to filter on
+        
+        limits: list
+            A list of tuples/list in the format (min,max) for each parameter
+        '''
+
+        # check that the limits and params have the same size
+        if len(params2filter) != len(limits):
+            raise ValueError('Size mismatch between limits and parameters lists.')
+
+        with open(self.db_file, 'rb') as f:
+            db = pickle.load(f)
+
+        if len(params2filter) == 0:
+            print('Nothing to filter the library on! Thanks for making my life easy.')
+            return db['lcs'], db['params']
+
+        db_filtered = db['lcs']
+        params_filtered = db['params']
+        for i,paramf in enumerate(params2filter):
+            col2filter = db['param_names'].index(paramf)
+            cond = (params_filtered[:,col2filter] >= limits[i][0]) & (params_filtered[:,col2filter] <= limits[i][1])
+            db_filtered = db_filtered[cond]
+            params_filtered = params_filtered[cond]
+        
+        return db_filtered, params_filtered
+
 
     def compute_downprojection(self, algorithm='TSNE', algorithm_kwargs = {}, skip=1, store=True, comp=1):
 
@@ -336,12 +381,16 @@ class Database(PhoebeLearner):
             raise ImportError('%s not a method of sklearn.manifold, try one of %s' % (algorithm, inspect.getmembers(sklearn.manifold, predicate=inspect.isclass)))
         
         if self.db_type == 'lc':
-            db = np.load(self.db_file)
+            with open(self.db_file, 'rb') as f:
+                db = pickle.load(f)
+                db_data = db['lcs']
 
         elif self.db_type == 'rv':
-            db = np.load(self.db_file+comp)
+            with open(self.db_file, 'rb') as f:
+                db = pickle.load(f)
+                db_data = db['rvs_%i' % comp]
         
-        dbmap = mapping(**algorithm_kwargs).fit_transform(db[::skip])
+        dbmap = mapping(**algorithm_kwargs).fit_transform(db_data[::skip])
         if store:
             self.downprojection = dbmap
         
